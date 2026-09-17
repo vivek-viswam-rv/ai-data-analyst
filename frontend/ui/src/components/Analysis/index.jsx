@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 
+import GithubLink from "components/commons/GithubLink";
 import ThemeToggle from "components/commons/ThemeToggle";
 import { HOME_ROUTE } from "components/routeConstants";
 import { AGENT_LABELS } from "constants/analysis";
@@ -118,6 +119,7 @@ const Analysis = () => {
           </div>
           <div className="flex items-center gap-2">
             <DownloadButtons state={state} />
+            <GithubLink />
             <ThemeToggle />
           </div>
         </div>

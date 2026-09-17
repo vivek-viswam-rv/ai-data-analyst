@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
+import GithubLink from "components/commons/GithubLink";
 import ThemeToggle from "components/commons/ThemeToggle";
 import { ANALYSIS_ROUTE } from "components/routeConstants";
 import {
@@ -60,7 +61,10 @@ const Upload = () => {
               Upload a CSV or Excel file and a team of agents will analyze it.
             </p>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-1">
+            <GithubLink />
+            <ThemeToggle />
+          </div>
         </div>
 
         <div className="space-y-4">
