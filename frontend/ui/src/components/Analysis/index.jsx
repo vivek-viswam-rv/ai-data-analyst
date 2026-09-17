@@ -100,9 +100,9 @@ const Analysis = () => {
   }
 
   return (
-    <div className="min-h-svh bg-background px-4 py-8 text-foreground">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <div className="flex items-center justify-between gap-4 border-b pb-4">
+    <div className="flex h-svh flex-col overflow-hidden bg-background text-foreground">
+      <header className="shrink-0 border-b px-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 py-4">
           <div>
             <Link
               to={HOME_ROUTE}
@@ -121,9 +121,11 @@ const Analysis = () => {
             <ThemeToggle />
           </div>
         </div>
+      </header>
 
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-          <div className="lg:w-64 lg:shrink-0">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 lg:overflow-hidden">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 py-6 lg:h-full lg:flex-row lg:py-0">
+          <div className="lg:w-64 lg:shrink-0 lg:overflow-y-auto lg:py-6">
             <AgentRail
               agents={state.agents}
               agentStatus={state.agentStatus}
@@ -132,7 +134,7 @@ const Analysis = () => {
             />
           </div>
 
-          <div className="min-w-0 flex-1 space-y-6">
+          <div className="min-w-0 flex-1 space-y-6 lg:overflow-y-auto lg:py-6 lg:pr-1">
             {state.runError && (
               <Alert variant="destructive">
                 <AlertTitle>Analysis failed</AlertTitle>
