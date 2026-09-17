@@ -31,8 +31,13 @@ def interpreter_model() -> ChatOpenAI:
 
 
 def _model(name: str) -> ChatOpenAI:
+    # gpt-5.x models only accept function tools through the Responses API.
     return ChatOpenAI(
-        model=name, api_key=settings.openai_api_key or None, timeout=90, max_retries=2
+        model=name,
+        api_key=settings.openai_api_key or None,
+        use_responses_api=True,
+        timeout=90,
+        max_retries=2,
     )
 
 
