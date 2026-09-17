@@ -12,7 +12,7 @@ import {
 import { formatTick } from "utils/report";
 
 const BarChartView = ({ spec }) => (
-  <ResponsiveContainer width="100%" height={280}>
+  <ResponsiveContainer width="100%" height={320}>
     <BarChart data={spec.data}>
       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
       <XAxis
@@ -37,14 +37,22 @@ const BarChartView = ({ spec }) => (
       />
       <Tooltip />
       {spec.series.length > 1 && <Legend />}
-      {spec.series.map((s, i) => (
-        <Bar
-          key={s}
-          dataKey={s}
-          fill={`var(--chart-${(i % 5) + 1})`}
-          radius={[4, 4, 0, 0]}
-        />
-      ))}
+      {spec.series.map((s, i) => {
+        const radius =
+          !spec.stacked || i === spec.series.length - 1
+            ? [4, 4, 0, 0]
+            : [0, 0, 0, 0];
+        return (
+          <Bar
+            key={s}
+            dataKey={s}
+            fill={`var(--chart-${(i % 5) + 1})`}
+            radius={radius}
+            barSize={24}
+            stackId={spec.stacked ? "stack" : undefined}
+          />
+        );
+      })}
     </BarChart>
   </ResponsiveContainer>
 );

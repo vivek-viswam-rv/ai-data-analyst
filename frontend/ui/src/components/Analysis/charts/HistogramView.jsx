@@ -2,6 +2,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -11,7 +12,7 @@ import {
 import { formatTick } from "utils/report";
 
 const HistogramView = ({ spec }) => (
-  <ResponsiveContainer width="100%" height={280}>
+  <ResponsiveContainer width="100%" height={320}>
     <BarChart data={spec.data}>
       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
       <XAxis
@@ -35,11 +36,16 @@ const HistogramView = ({ spec }) => (
         }}
       />
       <Tooltip />
-      <Bar
-        dataKey={spec.series[0]}
-        fill="var(--chart-1)"
-        radius={[4, 4, 0, 0]}
-      />
+      {spec.series.length > 1 && <Legend />}
+      {spec.series.map((s, i) => (
+        <Bar
+          key={s}
+          dataKey={s}
+          fill={`var(--chart-${(i % 5) + 1})`}
+          radius={[4, 4, 0, 0]}
+          barSize={24}
+        />
+      ))}
     </BarChart>
   </ResponsiveContainer>
 );

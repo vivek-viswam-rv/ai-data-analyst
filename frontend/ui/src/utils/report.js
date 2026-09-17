@@ -110,6 +110,12 @@ const buildDataQualitySections = (report) => [
 const buildEdaSections = (report) => [
   report.summary,
   buildBulletList(
+    report.distributions.map(
+      (distribution) =>
+        `**${distribution.column}** (${distribution.shape.replace(/_/g, " ")}): ${distribution.detail}`
+    )
+  ),
+  buildBulletList(
     report.findings.map(
       (finding) =>
         `**${finding.title}**: ${finding.detail} (${finding.columns.join(", ")})`

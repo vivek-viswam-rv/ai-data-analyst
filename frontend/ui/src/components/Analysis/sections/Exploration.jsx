@@ -1,6 +1,11 @@
 import { Badge } from "shadcn/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "shadcn/card";
 
+const formatShape = (shape) => {
+  const words = shape.replace(/_/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+};
+
 const Exploration = ({ report }) => (
   <Card>
     <CardHeader>
@@ -8,6 +13,20 @@ const Exploration = ({ report }) => (
     </CardHeader>
     <CardContent className="flex flex-col gap-4">
       <p className="text-muted-foreground">{report.summary}</p>
+
+      {report.distributions.length > 0 && (
+        <div className="flex flex-col gap-3">
+          {report.distributions.map((distribution) => (
+            <div key={distribution.column} className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <p className="font-semibold">{distribution.column}</p>
+                <Badge variant="outline">{formatShape(distribution.shape)}</Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">{distribution.detail}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {report.findings.length === 0 ? (
         <p className="text-sm text-muted-foreground">No findings yet.</p>
