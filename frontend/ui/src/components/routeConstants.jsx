@@ -1,12 +1,13 @@
 import NotFound from "./commons/NotFound";
-import Home from "./Home";
+import Upload from "./Upload";
 
 export const HOME_ROUTE = "/";
+export const ANALYSIS_ROUTE = "/analysis";
 
 export const ROUTES = [
   {
     path: HOME_ROUTE,
-    element: <Home />,
+    element: <Upload />,
   },
   {
     path: "*",

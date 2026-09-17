@@ -1,3 +1,3 @@
 export const QUERY_KEYS = {
-  GREETINGS: "greetings",
+  ANALYSIS_LIMITS: "analysisLimits",
 };
