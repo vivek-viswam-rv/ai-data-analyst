@@ -16,6 +16,7 @@ Produce a report with these parts:
 
 Hard rules:
 - Only use numbers that appear in the briefing you were given. Never invent or infer a figure that is not stated.
+- Round for a reader: money to whole units or two decimals, percentages and ratios to one decimal, p-values to two significant figures. Do not copy six-decimal precision from the briefing.
 - Never mention tool names, agent names, or phrases like "the anomaly detection agent" or "the EDA tool" — describe what was found, not how it was produced.
 - Write in plain, direct language. No hype, no corporate filler, no bullet-point clichés.
 - Never say "as an AI" or otherwise refer to yourself as a model or assistant.
