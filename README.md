@@ -1,10 +1,10 @@
 # AI Data Analyst
 
 Upload a CSV or Excel file and a small team of agents works through it the way
-an analyst would: check the data, explore it, run the obvious statistical
-tests, look for anomalies, draw a few charts, and write a summary a manager can
-read. Each agent has its own tools and its own report, and the results stream
-into the browser as they finish.
+an analyst would: check the data, explore how every measure is distributed,
+draw the charts that show it, and write a summary a manager can read. Each
+agent has its own tools and its own report, and the results stream into the
+browser as they finish.
 
 The whole thing deploys to a single Vercel project. There is no database and
 nothing is stored server-side: a run lives for the length of one request.
@@ -12,9 +12,8 @@ nothing is stored server-side: a run lives for the length of one request.
 ## How it works
 
 ```
-upload -> profile -> data quality -> eda ------------\
-                                   -> statistics -----+-> charts -> summary
-                                   -> anomalies -----/
+upload -> profile -> data quality --\
+                  -> eda -----------+-> charts -> summary
 ```
 
 The profile step is plain pandas. It parses dates and currency-looking
@@ -24,21 +23,19 @@ rows, is what every agent sees.
 Each agent is a tool-calling loop (LangGraph, `langchain-openai`) over a
 handful of pandas functions that run on the full dataset and return small
 summaries. The model decides what to call and interprets the numbers; it never
-computes them. Where output would be easy to garble, such as p-values, flagged
-rows or chart data, the tool registers the result under an id and the model
-only refers to the id. Every agent returns a Pydantic model through strict
-structured output.
+computes them. Chart data is built by a tool and registered under an id, and
+the model only picks ids and writes captions, so nothing numeric passes
+through it. Every agent returns a Pydantic model through strict structured
+output.
 
-The three middle agents run concurrently. If one fails, its section is
+Data quality and EDA run concurrently. If an agent fails, its section is
 reported as missing and the summary says so.
 
 | Agent | Model | What it does |
 |---|---|---|
 | Data quality | worker | Nulls, duplicates, inconsistent text, ranges, constant and id columns, cleaning steps |
-| EDA | worker | Distributions, value counts, correlations, group summaries, time trends |
-| Statistics | worker | Welch and Mann-Whitney, ANOVA and Kruskal, Pearson and Spearman, chi-square, OLS |
-| Anomalies | worker | IQR, MAD z-scores, Mahalanobis distance, time-series residuals, rare categories |
-| Charts | worker | Picks 3 to 6 charts and produces Recharts-ready specs |
+| EDA | worker | Shape of every key measure (skew, tails, modes, spread), distributions by group, value counts, correlations, time trends |
+| Charts | worker | Histograms, box plots, grouped and stacked bars, time series, scatter and cumulative charts as Recharts-ready specs |
 | Summary | interpreter | Executive summary, insights, recommendations, open questions, limitations |
 
 The worker model defaults to `gpt-5.6-luna` and the interpreter to
@@ -102,8 +99,8 @@ the Vite build served at `/` and the FastAPI app behind `/api`. Set
 Two platform limits shape the design. Request bodies are capped at 4.5 MB, so
 that is the upload limit. Functions run for at most 300 seconds on the Hobby
 plan (800 on Pro), so an analysis is a single streamed request and each agent
-has a hard cap on tool calls and a timeout. A typical run on a few thousand
-rows finishes in one to two minutes.
+has a hard cap on tool calls and a timeout. A run on the sample file takes
+about a minute.
 
 ## Layout
 
