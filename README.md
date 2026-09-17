@@ -1,5 +1,7 @@
 # AI Data Analyst
 
+Live at https://ai-data-analyst-vivek.vercel.app
+
 Upload a CSV or Excel file and a small team of agents works through it the way
 an analyst would: check the data, explore how every measure is distributed,
 draw the charts that show it, and write a summary a manager can read. Each
