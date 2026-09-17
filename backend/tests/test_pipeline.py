@@ -14,7 +14,7 @@ from app.analysis.schemas import (
 
 CANNED = {
     "quality": DataQualityReport(score=70, summary="ok", issues=[], cleaning_steps=[]),
-    "eda": EDAReport(summary="ok", findings=[]),
+    "eda": EDAReport(summary="ok", distributions=[], findings=[]),
     "visualization": VisualizationReport(summary="ok", charts=[]),
     "interpretation": InterpretationReport(
         executive_summary="ok",

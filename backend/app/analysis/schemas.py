@@ -11,7 +11,16 @@ from pydantic import BaseModel
 
 Severity = Literal["low", "medium", "high"]
 Priority = Literal["high", "medium", "low"]
-ChartType = Literal["bar", "line", "scatter", "histogram"]
+ChartType = Literal["bar", "line", "scatter", "histogram", "box"]
+Shape = Literal[
+    "roughly_symmetric",
+    "right_skewed",
+    "left_skewed",
+    "bimodal",
+    "uniform",
+    "heavy_tailed",
+    "concentrated",
+]
 
 
 # Data quality -----------------------------------------------------------------
@@ -42,8 +51,17 @@ class Finding(BaseModel):
     columns: list[str]
 
 
+class DistributionSummary(BaseModel):
+    """How one numeric column is shaped, in words a reader can use."""
+
+    column: str
+    shape: Shape
+    detail: str
+
+
 class EDAReport(BaseModel):
     summary: str
+    distributions: list[DistributionSummary]
     findings: list[Finding]
 
 
@@ -61,6 +79,13 @@ class VisualizationPlan(BaseModel):
 
 
 class ChartSpec(BaseModel):
+    """Chart data the browser renders with Recharts.
+
+    `data` is a list of flat rows keyed by `x_key` plus one key per series.
+    For a box chart each row carries min, q1, median, q3, max and n instead.
+    `stacked` only matters for multi-series bar charts.
+    """
+
     id: str
     type: ChartType
     title: str
@@ -69,6 +94,7 @@ class ChartSpec(BaseModel):
     x_label: str
     y_label: str
     series: list[str]
+    stacked: bool = False
     data: list[dict[str, float | str | None]]
 
 

@@ -6,6 +6,7 @@ from app.analysis.schemas import (
     AgentError,
     ChartSpec,
     DataQualityReport,
+    DistributionSummary,
     EDAReport,
     Finding,
     QualityIssue,
@@ -45,6 +46,13 @@ def _quality():
 def _eda():
     return EDAReport(
         summary="Revenue varies a lot by region.",
+        distributions=[
+            DistributionSummary(
+                column="revenue",
+                shape="right_skewed",
+                detail="Median revenue is $20 with a long tail from a few very large orders.",
+            )
+        ],
         findings=[
             Finding(
                 title="North leads revenue",
@@ -100,6 +108,12 @@ def test_digest_includes_finding_titles():
     text = digest(_brief(), None, None, _eda(), None, [])
     assert "North leads revenue" in text
     assert "Revenue is right-skewed" in text
+
+
+def test_digest_includes_distribution_detail():
+    text = digest(_brief(), None, None, _eda(), None, [])
+    assert "revenue is right skewed" in text
+    assert "Median revenue is $20 with a long tail from a few very large orders." in text
 
 
 def test_digest_includes_chart_caption():

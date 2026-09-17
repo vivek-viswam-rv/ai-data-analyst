@@ -65,6 +65,9 @@ def _eda_section(eda: EDAReport | None) -> str:
     if eda is None:
         return f"EDA: {_NOT_AVAILABLE}"
     lines = [f"EDA: {eda.summary}"]
+    for dist in eda.distributions[:_MAX_ITEMS]:
+        shape_words = dist.shape.replace("_", " ")
+        lines.append(f"- {dist.column} is {shape_words}: {dist.detail}")
     for finding in eda.findings[:_MAX_ITEMS]:
         lines.append(f"- {finding.title}: {finding.detail}")
     return "\n".join(lines)

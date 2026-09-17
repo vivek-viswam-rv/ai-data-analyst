@@ -70,3 +70,34 @@ def test_crosstab_structure(tools_by_name):
 def test_bad_column_name_returns_error(tools_by_name):
     result = tools_by_name["value_counts"].invoke({"column": "nonexistent_column"})
     assert "error" in result
+
+
+def test_distribution_revenue_shape(tools_by_name):
+    result = tools_by_name["distribution"].invoke({"column": "revenue"})
+    assert "error" not in result
+    assert result["shape_hint"] == "right_skewed"
+    total = sum(row["count"] for row in result["histogram"])
+    assert total == 203
+
+
+def test_distribution_by_group_region(tools_by_name):
+    result = tools_by_name["distribution_by_group"].invoke(
+        {"value_column": "revenue", "group_column": "region"}
+    )
+    assert len(result["groups"]) == 5
+    for group in result["groups"]:
+        assert group["q1"] <= group["median"] <= group["q3"]
+
+
+def test_top_and_bottom_outlier_first(tools_by_name):
+    result = tools_by_name["top_and_bottom"].invoke(
+        {"column": "revenue", "n": 3, "label_column": "order_id"}
+    )
+    assert result["top"][0]["value"] == 1_000_000
+    assert len(result["top"]) == 3
+    assert len(result["bottom"]) == 3
+
+
+def test_distribution_bad_column_returns_error(tools_by_name):
+    result = tools_by_name["distribution"].invoke({"column": "nonexistent_column"})
+    assert "error" in result
