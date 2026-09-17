@@ -4,15 +4,11 @@ from app.analysis.agents.interpretation import digest
 from app.analysis.profiling import build_brief
 from app.analysis.schemas import (
     AgentError,
-    AnomalyGroup,
-    AnomalyReport,
     ChartSpec,
     DataQualityReport,
     EDAReport,
     Finding,
     QualityIssue,
-    StatisticsReport,
-    StatTest,
     VisualizationReport,
 )
 
@@ -64,45 +60,6 @@ def _eda():
     )
 
 
-def _stats():
-    return StatisticsReport(
-        summary="Region is associated with revenue.",
-        tests=[
-            StatTest(
-                id="t1",
-                name="ANOVA",
-                columns=["region", "revenue"],
-                hypothesis="Revenue differs by region.",
-                statistic=4.2,
-                p_value=0.01,
-                effect_size=0.3,
-                effect_size_name="eta squared",
-                conclusion="Revenue differs significantly by region.",
-                caveats=["Observational data."],
-            )
-        ],
-    )
-
-
-def _anomalies():
-    return AnomalyReport(
-        summary="A handful of unusually large orders.",
-        total_flagged=2,
-        groups=[
-            AnomalyGroup(
-                id="g1",
-                method="z-score",
-                columns=["revenue"],
-                count=2,
-                description="Two rows have revenue far above the mean.",
-                interpretation="Likely large bulk orders.",
-                example_columns=["customer_id", "revenue"],
-                example_rows=[["3", "9000"]],
-            )
-        ],
-    )
-
-
 def _charts():
     return VisualizationReport(
         summary="One chart of revenue by region.",
@@ -123,48 +80,39 @@ def _charts():
 
 
 def _errors():
-    return [AgentError(agent="statistics", message="timed out after 120s")]
+    return [AgentError(agent="eda", message="timed out after 120s")]
 
 
 def test_digest_includes_goal_and_columns():
-    text = digest(
-        _brief(),
-        "Which region drives the most revenue?",
-        _quality(),
-        _eda(),
-        _stats(),
-        _anomalies(),
-        _charts(),
-        _errors(),
-    )
-    assert "Which region drives the most revenue?" in text
-    for col in ("customer_id", "revenue", "region"):
-        assert col in text
+    text = digest(_brief(), "Why is revenue down?", _quality(), _eda(), _charts(), [])
+    assert "Why is revenue down?" in text
+    for column in ("customer_id", "revenue", "region"):
+        assert column in text
 
 
-def test_digest_includes_quality_issue_description():
-    text = digest(_brief(), None, _quality(), None, None, None, None, [])
+def test_digest_includes_quality_issue():
+    text = digest(_brief(), None, _quality(), None, None, [])
+    assert "score 72/100" in text
     assert "revenue has 3 missing values" in text
 
 
 def test_digest_includes_finding_titles():
-    text = digest(_brief(), None, None, _eda(), None, None, None, [])
+    text = digest(_brief(), None, None, _eda(), None, [])
     assert "North leads revenue" in text
     assert "Revenue is right-skewed" in text
 
 
-def test_digest_includes_anomaly_count_and_chart_caption():
-    text = digest(_brief(), None, None, None, None, _anomalies(), _charts(), [])
-    assert "2 rows" in text
+def test_digest_includes_chart_caption():
+    text = digest(_brief(), None, None, None, _charts(), [])
     assert "North has the highest total revenue among all regions." in text
 
 
 def test_digest_includes_failed_agent_name():
-    text = digest(_brief(), None, None, None, None, None, None, _errors())
-    assert "statistical testing" in text
+    text = digest(_brief(), None, None, None, None, _errors())
+    assert "exploratory analysis" in text
     assert "timed out after 120s" in text
 
 
 def test_digest_marks_missing_reports_as_not_available():
-    text = digest(_brief(), None, None, None, None, None, None, [])
+    text = digest(_brief(), None, None, None, None, [])
     assert "not available" in text

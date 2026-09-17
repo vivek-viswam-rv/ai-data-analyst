@@ -10,11 +10,9 @@ from langchain_core.language_models import BaseChatModel
 from app.analysis.profiling import DatasetBrief
 from app.analysis.schemas import (
     AgentError,
-    AnomalyReport,
     DataQualityReport,
     EDAReport,
     InterpretationReport,
-    StatisticsReport,
     VisualizationReport,
 )
 
@@ -38,8 +36,6 @@ class AnalysisState(TypedDict, total=False):
     brief: DatasetBrief
     quality: DataQualityReport | None
     eda: EDAReport | None
-    stats: StatisticsReport | None
-    anomalies: AnomalyReport | None
     charts: VisualizationReport | None
     interpretation: InterpretationReport | None
     errors: Annotated[list[AgentError], operator.add]
@@ -48,8 +44,6 @@ class AnalysisState(TypedDict, total=False):
 AGENT_ORDER = [
     "data_quality",
     "eda",
-    "statistics",
-    "anomaly",
     "visualization",
     "interpretation",
 ]
@@ -57,8 +51,6 @@ AGENT_ORDER = [
 REPORT_KEYS = {
     "data_quality": "quality",
     "eda": "eda",
-    "statistics": "stats",
-    "anomaly": "anomalies",
     "visualization": "charts",
     "interpretation": "interpretation",
 }

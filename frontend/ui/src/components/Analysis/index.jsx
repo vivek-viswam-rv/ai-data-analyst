@@ -19,11 +19,9 @@ import { Skeleton } from "shadcn/skeleton";
 
 import AgentRail from "./AgentRail";
 import DownloadButtons from "./DownloadButtons";
-import Anomalies from "./sections/Anomalies";
 import Charts from "./sections/Charts";
 import DataQuality from "./sections/DataQuality";
 import Exploration from "./sections/Exploration";
-import Statistics from "./sections/Statistics";
 import Summary from "./sections/Summary";
 
 // interpretation is rendered separately (pinned above this list), so it is
@@ -31,16 +29,12 @@ import Summary from "./sections/Summary";
 const REMAINING_AGENT_ORDER = [
   "data_quality",
   "eda",
-  "statistics",
-  "anomaly",
   "visualization",
 ];
 
 const SECTION_COMPONENTS = {
   data_quality: DataQuality,
   eda: Exploration,
-  statistics: Statistics,
-  anomaly: Anomalies,
   visualization: Charts,
 };
 
@@ -49,8 +43,6 @@ const SECTION_COMPONENTS = {
 const SECTION_PLACEHOLDER_SHAPES = {
   data_quality: { bars: 4 },
   eda: { bars: 3 },
-  statistics: { bars: 4 },
-  anomaly: { bars: 3 },
   visualization: { bars: 1, chart: true },
 };
 

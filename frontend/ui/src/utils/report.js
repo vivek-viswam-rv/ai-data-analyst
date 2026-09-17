@@ -117,41 +117,6 @@ const buildEdaSections = (report) => [
   ),
 ];
 
-const buildStatisticsSections = (report) => [
-  report.summary,
-  buildMarkdownTable(
-    ["Test", "Columns", "Statistic", "p-value", "Effect size", "Conclusion"],
-    report.tests.map((test) => [
-      escapeMarkdownCell(test.name),
-      escapeMarkdownCell(test.columns.join(", ")),
-      formatSignificant(test.statistic),
-      formatPValue(test.p_value),
-      test.effect_size_name
-        ? escapeMarkdownCell(
-            `${test.effect_size_name}: ${formatSignificant(test.effect_size)}`
-          )
-        : "—",
-      escapeMarkdownCell(test.conclusion),
-    ])
-  ),
-];
-
-const buildAnomalySections = (report) => [
-  report.summary,
-  `Total flagged: ${report.total_flagged}`,
-  ...report.groups.flatMap((group) => [
-    `### ${group.method} (${group.count})`,
-    group.description,
-    group.interpretation,
-    buildMarkdownTable(
-      group.example_columns,
-      group.example_rows.map((row) =>
-        row.map((cell) => escapeMarkdownCell(cell))
-      )
-    ),
-  ]),
-];
-
 const buildVisualizationSections = (report) => [
   report.summary,
   buildBulletList(
@@ -162,8 +127,6 @@ const buildVisualizationSections = (report) => [
 const AGENT_REPORT_SECTION_BUILDERS = {
   data_quality: buildDataQualitySections,
   eda: buildEdaSections,
-  statistics: buildStatisticsSections,
-  anomaly: buildAnomalySections,
   visualization: buildVisualizationSections,
 };
 

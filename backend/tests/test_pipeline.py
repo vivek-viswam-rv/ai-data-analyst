@@ -6,19 +6,15 @@ import pytest
 from app.analysis import graph as graph_module
 from app.analysis.pipeline import prepare, stream_analysis
 from app.analysis.schemas import (
-    AnomalyReport,
     DataQualityReport,
     EDAReport,
     InterpretationReport,
-    StatisticsReport,
     VisualizationReport,
 )
 
 CANNED = {
     "quality": DataQualityReport(score=70, summary="ok", issues=[], cleaning_steps=[]),
     "eda": EDAReport(summary="ok", findings=[]),
-    "statistics": StatisticsReport(summary="ok", tests=[]),
-    "anomaly": AnomalyReport(summary="ok", total_flagged=0, groups=[]),
     "visualization": VisualizationReport(summary="ok", charts=[]),
     "interpretation": InterpretationReport(
         executive_summary="ok",
@@ -67,23 +63,22 @@ async def test_stream_emits_every_agent_in_order(sales_csv, stubbed_agents):
     assert events[0]["event"] == "brief"
     assert events[-1]["event"] == "done"
     finished = [e["agent"] for e in events if e["event"] == "agent_finished"]
-    assert finished[0] == "data_quality"
-    assert set(finished[1:4]) == {"eda", "statistics", "anomaly"}
-    assert finished[4:] == ["visualization", "interpretation"]
+    assert set(finished[:2]) == {"data_quality", "eda"}
+    assert finished[2:] == ["visualization", "interpretation"]
     reports = events[-1]["reports"]
     assert reports["interpretation"].executive_summary == "ok"
     assert events[-1]["errors"] == []
 
 
 async def test_failed_agent_is_reported_and_run_continues(sales_csv, stubbed_agents):
-    stubbed_agents(failing={"statistics"})
+    stubbed_agents(failing={"eda"})
     df, brief = prepare("sales.csv", sales_csv)
     events = await _collect(df, brief)
 
     failed = [e for e in events if e["event"] == "agent_failed"]
-    assert [e["agent"] for e in failed] == ["statistics"]
+    assert [e["agent"] for e in failed] == ["eda"]
     assert "exploded" in failed[0]["message"]
     done = events[-1]
-    assert done["reports"]["stats"] is None
+    assert done["reports"]["eda"] is None
     assert done["reports"]["interpretation"] is not None
-    assert [e.agent for e in done["errors"]] == ["statistics"]
+    assert [e.agent for e in done["errors"]] == ["eda"]

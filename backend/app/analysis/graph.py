@@ -1,8 +1,8 @@
 """The team, wired up.
 
-    profile -> data_quality -> [eda, statistics, anomaly] -> visualization -> interpretation
+    profile -> [data_quality, eda] -> visualization -> interpretation
 
-The three middle agents run in the same LangGraph superstep, so they execute
+Data quality and EDA run in the same LangGraph superstep, so they execute
 concurrently. A failing agent records an error and the rest carry on; the
 interpreter is told what is missing.
 """
@@ -15,7 +15,7 @@ from langgraph.config import get_stream_writer
 from langgraph.graph import END, START, StateGraph
 from langgraph.runtime import Runtime
 
-from app.analysis.agents import anomaly, eda, interpretation, quality, statistics, visualization
+from app.analysis.agents import eda, interpretation, quality, visualization
 from app.analysis.schemas import AgentError
 from app.analysis.state import REPORT_KEYS, AnalysisContext, AnalysisState
 
@@ -52,21 +52,12 @@ async def _eda(state: AnalysisState, ctx: AnalysisContext):
     return await eda.run(ctx.df, state["brief"], state.get("goal"), model=ctx.worker)
 
 
-async def _statistics(state: AnalysisState, ctx: AnalysisContext):
-    return await statistics.run(ctx.df, state["brief"], state.get("goal"), model=ctx.worker)
-
-
-async def _anomaly(state: AnalysisState, ctx: AnalysisContext):
-    return await anomaly.run(ctx.df, state["brief"], state.get("goal"), model=ctx.worker)
-
-
 async def _visualization(state: AnalysisState, ctx: AnalysisContext):
     return await visualization.run(
         ctx.df,
         state["brief"],
         state.get("goal"),
         eda=state.get("eda"),
-        stats=state.get("stats"),
         model=ctx.worker,
     )
 
@@ -77,8 +68,6 @@ async def _interpretation(state: AnalysisState, ctx: AnalysisContext):
         state.get("goal"),
         quality=state.get("quality"),
         eda=state.get("eda"),
-        stats=state.get("stats"),
-        anomalies=state.get("anomalies"),
         charts=state.get("charts"),
         errors=state.get("errors", []),
         model=ctx.interpreter,
@@ -89,14 +78,11 @@ def build_graph():
     g = StateGraph(AnalysisState, context_schema=AnalysisContext)
     g.add_node("data_quality", _node("data_quality", _quality))
     g.add_node("eda", _node("eda", _eda))
-    g.add_node("statistics", _node("statistics", _statistics))
-    g.add_node("anomaly", _node("anomaly", _anomaly))
     g.add_node("visualization", _node("visualization", _visualization))
     g.add_node("interpretation", _node("interpretation", _interpretation))
 
-    g.add_edge(START, "data_quality")
-    for name in ("eda", "statistics", "anomaly"):
-        g.add_edge("data_quality", name)
+    for name in ("data_quality", "eda"):
+        g.add_edge(START, name)
         g.add_edge(name, "visualization")
     g.add_edge("visualization", "interpretation")
     g.add_edge("interpretation", END)

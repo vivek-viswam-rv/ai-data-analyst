@@ -1,11 +1,9 @@
-// The six agents, in the order the backend runs them (see
+// The agents, in the order the backend runs them (see
 // backend/app/analysis/state.py AGENT_ORDER). Kept as a constant so the rail
 // can render immediately, before the `brief` event confirms the same list.
 export const AGENT_ORDER = [
   "data_quality",
   "eda",
-  "statistics",
-  "anomaly",
   "visualization",
   "interpretation",
 ];
@@ -13,8 +11,6 @@ export const AGENT_ORDER = [
 export const AGENT_LABELS = {
   data_quality: "Data quality",
   eda: "Exploration",
-  statistics: "Statistics",
-  anomaly: "Anomalies",
   visualization: "Charts",
   interpretation: "Summary",
 };
@@ -24,8 +20,6 @@ export const AGENT_LABELS = {
 export const AGENT_REPORT_KEY = {
   data_quality: "quality",
   eda: "eda",
-  statistics: "stats",
-  anomaly: "anomalies",
   visualization: "charts",
   interpretation: "interpretation",
 };

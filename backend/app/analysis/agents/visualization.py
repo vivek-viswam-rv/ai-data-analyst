@@ -7,7 +7,7 @@ from langchain_core.language_models import BaseChatModel
 
 from app.analysis.agents.base import run_agent, worker_model
 from app.analysis.profiling import DatasetBrief
-from app.analysis.schemas import EDAReport, StatisticsReport, VisualizationPlan, VisualizationReport
+from app.analysis.schemas import EDAReport, VisualizationPlan, VisualizationReport
 from app.analysis.tools.charts import build_tools
 from app.analysis.tools.common import ArtifactStore
 
@@ -20,9 +20,8 @@ def user_message(
     brief: DatasetBrief,
     goal: str | None,
     eda: EDAReport | None,
-    stats: StatisticsReport | None,
 ) -> str:
-    """Build the human message: brief, optional goal, EDA findings, stats conclusions."""
+    """Build the human message: brief, optional goal and the EDA findings."""
     parts = [brief.to_prompt()]
     if goal:
         parts.append(f"\nGoal: {goal}")
@@ -30,11 +29,6 @@ def user_message(
         lines = ["\nEDA findings:"]
         for i, finding in enumerate(eda.findings, start=1):
             lines.append(f"{i}. {finding.title}: {finding.detail}")
-        parts.append("\n".join(lines))
-    if stats is not None:
-        lines = ["\nStatistical tests:"]
-        for test in stats.tests:
-            lines.append(f"- {test.name}: {test.conclusion}")
         parts.append("\n".join(lines))
     return "\n".join(parts)
 
@@ -62,13 +56,12 @@ async def run(
     brief: DatasetBrief,
     goal: str | None = None,
     eda: EDAReport | None = None,
-    stats: StatisticsReport | None = None,
     model: BaseChatModel | None = None,
 ) -> VisualizationReport:
     """Run the visualization agent over `df` and return a validated VisualizationReport."""
     store = ArtifactStore()
     tools = build_tools(df, store)
-    msg = user_message(brief, goal, eda, stats)
+    msg = user_message(brief, goal, eda)
     plan = await run_agent(
         name="visualization",
         model=model or worker_model(),
