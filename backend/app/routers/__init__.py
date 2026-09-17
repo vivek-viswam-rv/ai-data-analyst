@@ -1,5 +1,5 @@
-from app.routers.greetings import router as greetings_router
+from app.routers.analyses import router as analyses_router
 
-ROUTERS = [greetings_router]
+ROUTERS = [analyses_router]
 
-__all__ = ["greetings_router", "ROUTERS"]
+__all__ = ["analyses_router", "ROUTERS"]
