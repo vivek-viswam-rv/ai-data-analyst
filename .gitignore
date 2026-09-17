@@ -39,7 +39,10 @@ node_modules/
 dist/
 dist-ssr/
 *.local
-ui/dist/
+frontend/dist/
+
+# Vercel
+.vercel/
 
 # Logs
 *.log

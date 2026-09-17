@@ -5,7 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, import.meta.dirname, "");
+  const env = loadEnv(mode, path.resolve(import.meta.dirname, ".."), "");
 
   return {
     root: "./ui",
