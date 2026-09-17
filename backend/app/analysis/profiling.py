@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel
 
+from app.analysis.tools.common import fmt as _fmt
+
 ColumnKind = Literal["numeric", "datetime", "boolean", "categorical", "text", "empty"]
 
 SAMPLE_VALUES = 5
@@ -189,19 +191,6 @@ def build_brief(df: pd.DataFrame, filename: str, original_rows: int | None = Non
 def _looks_like_id(name: str) -> bool:
     lowered = name.lower()
     return lowered == "id" or lowered.endswith("_id") or lowered.endswith("id") or "key" in lowered
-
-
-def _fmt(value: object) -> str:
-    if value is None or (isinstance(value, float) and np.isnan(value)):
-        return ""
-    if isinstance(value, pd.Timestamp):
-        return value.isoformat(sep=" ", timespec="seconds")
-    if isinstance(value, float | np.floating):
-        return f"{float(value):.6g}"
-    if isinstance(value, np.integer):
-        return str(int(value))
-    text = str(value)
-    return text if len(text) <= 40 else text[:37] + "..."
 
 
 def _safe_float(value: object) -> float | None:
