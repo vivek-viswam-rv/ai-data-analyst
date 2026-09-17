@@ -13,7 +13,7 @@ from app.analysis.tools.common import ArtifactStore
 
 PROMPT = (Path(__file__).resolve().parent.parent / "prompts" / "visualization.md").read_text()
 
-MAX_CHARTS = 6
+MAX_CHARTS = 8
 
 
 def user_message(
@@ -21,12 +21,17 @@ def user_message(
     goal: str | None,
     eda: EDAReport | None,
 ) -> str:
-    """Build the human message: brief, optional goal and the EDA findings."""
+    """Build the human message: brief, optional goal, and the EDA report."""
     parts = [brief.to_prompt()]
     if goal:
         parts.append(f"\nGoal: {goal}")
     if eda is not None:
-        lines = ["\nEDA findings:"]
+        lines = [f"\nEDA summary: {eda.summary}"]
+        if eda.distributions:
+            lines.append("\nEDA distributions:")
+            for dist in eda.distributions:
+                lines.append(f"- {dist.column}: {dist.shape}. {dist.detail}")
+        lines.append("\nEDA findings:")
         for i, finding in enumerate(eda.findings, start=1):
             lines.append(f"{i}. {finding.title}: {finding.detail}")
         parts.append("\n".join(lines))
@@ -69,6 +74,6 @@ async def run(
         tools=tools,
         response_format=VisualizationPlan,
         user_message=msg,
-        max_tool_calls=10,
+        max_tool_calls=14,
     )
     return assemble(plan, store)
