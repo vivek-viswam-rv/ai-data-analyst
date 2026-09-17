@@ -39,3 +39,9 @@ export const GOAL_MAX_LENGTH = 500;
 export const ANALYSIS_STORAGE_KEY = "ai-data-analyst:last-run";
 
 export const REPO_URL = "https://github.com/vivek-viswam-rv/ai-data-analyst";
+
+export const EXAMPLE_DATASET = {
+  url: "/examples/sales.csv",
+  filename: "sales.csv",
+  goal: "How is revenue distributed, and which region and channel drive it?",
+};

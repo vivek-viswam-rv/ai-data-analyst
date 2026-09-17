@@ -63,7 +63,8 @@ Then:
 make dev            # FastAPI on :8000 and Vite on :5173
 ```
 
-Open http://localhost:5173 and drop in `examples/sales.csv`. The sample has a
+Open http://localhost:5173 and click "Try the example dataset", or drop in
+`frontend/ui/public/examples/sales.csv` yourself. The sample has a
 few planted problems (missing units, a lowercase region, two implausible
 revenues, duplicated rows) so there is something to find.
 
@@ -121,9 +122,9 @@ backend/
     pipeline.py          prepare an upload and stream a run
   tests/
 frontend/
+  ui/public/examples/    the sample dataset the app can load
   ui/src/apis/           axios calls and the SSE client
   ui/src/components/     Upload and Analysis pages, chart components
-examples/sales.csv
 vercel.json
 ```
 

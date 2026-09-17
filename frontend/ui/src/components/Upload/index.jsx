@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { FlaskConical, Loader2 } from "lucide-react";
 
 import GithubLink from "components/commons/GithubLink";
 import ThemeToggle from "components/commons/ThemeToggle";
@@ -8,6 +9,7 @@ import { ANALYSIS_ROUTE } from "components/routeConstants";
 import {
   ACCEPTED_FILE_EXTENSIONS,
   DEFAULT_MAX_UPLOAD_BYTES,
+  EXAMPLE_DATASET,
   GOAL_MAX_LENGTH,
 } from "constants/analysis";
 import { useFetchLimits, usePreview } from "hooks/reactQuery/useAnalysesApi";
@@ -27,6 +29,7 @@ const Upload = () => {
 
   const [file, setFile] = useState(null);
   const [goal, setGoal] = useState("");
+  const [isLoadingExample, setIsLoadingExample] = useState(false);
 
   const effectiveMaxBytes =
     limits?.data?.max_upload_bytes ?? DEFAULT_MAX_UPLOAD_BYTES;
@@ -51,6 +54,33 @@ const Upload = () => {
     previewMutation.mutate(selectedFile);
   };
 
+  const onTryExample = async () => {
+    setIsLoadingExample(true);
+
+    try {
+      const response = await fetch(EXAMPLE_DATASET.url);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch example dataset");
+      }
+
+      const blob = await response.blob();
+      const exampleFile = new File([blob], EXAMPLE_DATASET.filename, {
+        type: "text/csv",
+      });
+
+      if (!goal.trim()) {
+        setGoal(EXAMPLE_DATASET.goal);
+      }
+
+      onFileSelected(exampleFile);
+    } catch {
+      toast.error("Could not load the example dataset.");
+    } finally {
+      setIsLoadingExample(false);
+    }
+  };
+
   return (
     <div className="min-h-svh bg-background px-4 py-8 text-foreground">
       <div className="mx-auto max-w-4xl space-y-8">
@@ -73,6 +103,34 @@ const Upload = () => {
             filename={file?.name}
             onFileSelected={onFileSelected}
           />
+
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <div className="space-y-1">
+            <Button
+              type="button"
+              variant="secondary"
+              size="lg"
+              className="h-14 w-full text-base"
+              disabled={isLoadingExample || previewMutation.isPending}
+              onClick={onTryExample}
+            >
+              {isLoadingExample ? (
+                <Loader2 className="size-5 animate-spin" />
+              ) : (
+                <FlaskConical className="size-5" />
+              )}
+              Try the example dataset
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              606 rows of synthetic sales data with a few planted problems to
+              find.
+            </p>
+          </div>
 
           {previewMutation.isPending && (
             <div className="space-y-3">
