@@ -1,127 +1,145 @@
-# Wheel
+# AI Data Analyst
 
-Wheel is a minimal starter template for FastAPI + React apps. It ships with no
-database and no authentication — just the wiring between a FastAPI backend and a
-React frontend, demonstrated by one trivial example endpoint. Build on top of it.
+Upload a CSV or Excel file and a small team of agents works through it the way
+an analyst would: check the data, explore it, run the obvious statistical
+tests, look for anomalies, draw a few charts, and write a summary a manager can
+read. Each agent has its own tools and its own report, and the results stream
+into the browser as they finish.
 
-## Stack
+The whole thing deploys to a single Vercel project. There is no database and
+nothing is stored server-side: a run lives for the length of one request.
 
-| Layer    | Technology |
-|----------|------------|
-| Backend  | FastAPI |
-| Backend  | Pydantic Settings |
-| Backend  | uv |
-| Backend  | ruff |
-| Frontend | React 19 |
-| Frontend | Vite 7 |
-| Frontend | Tailwind CSS v4 |
-| Frontend | shadcn/ui |
-| Frontend | TanStack Query |
-| Frontend | Axios |
-| Frontend | Ramda |
-| Frontend | react-router-dom |
-| Frontend | Sonner |
-| Frontend | pnpm |
-| Frontend | ESLint + Prettier |
+## How it works
 
-## Getting started
+```
+upload -> profile -> data quality -> eda ------------\
+                                   -> statistics -----+-> charts -> summary
+                                   -> anomalies -----/
+```
 
-### Prerequisites
+The profile step is plain pandas. It parses dates and currency-looking
+strings, classifies columns and builds a short brief. That brief, not the raw
+rows, is what every agent sees.
 
-- Python 3.12+
-- [uv](https://docs.astral.sh/uv/)
-- Node 22+
-- pnpm
+Each agent is a tool-calling loop (LangGraph, `langchain-openai`) over a
+handful of pandas functions that run on the full dataset and return small
+summaries. The model decides what to call and interprets the numbers; it never
+computes them. Where output would be easy to garble, such as p-values, flagged
+rows or chart data, the tool registers the result under an id and the model
+only refers to the id. Every agent returns a Pydantic model through strict
+structured output.
 
-### Setup
+The three middle agents run concurrently. If one fails, its section is
+reported as missing and the summary says so.
+
+| Agent | Model | What it does |
+|---|---|---|
+| Data quality | worker | Nulls, duplicates, inconsistent text, ranges, constant and id columns, cleaning steps |
+| EDA | worker | Distributions, value counts, correlations, group summaries, time trends |
+| Statistics | worker | Welch and Mann-Whitney, ANOVA and Kruskal, Pearson and Spearman, chi-square, OLS |
+| Anomalies | worker | IQR, MAD z-scores, Mahalanobis distance, time-series residuals, rare categories |
+| Charts | worker | Picks 3 to 6 charts and produces Recharts-ready specs |
+| Summary | interpreter | Executive summary, insights, recommendations, open questions, limitations |
+
+The worker model defaults to `gpt-5.6-luna` and the interpreter to
+`gpt-5.6-terra`. Both are set by environment variable.
+
+## Running locally
+
+Requirements: Python 3.12+, [uv](https://docs.astral.sh/uv/), Node 22+, pnpm.
 
 ```bash
-make setup        # uv sync, pnpm install, copies env.sample to .env
+make setup          # uv sync, pnpm install, copies env.sample to .env
 ```
 
-### Run
+Put your key in `.env`:
+
+```
+OPENAI_API_KEY="sk-..."
+```
+
+Then:
 
 ```bash
-make dev          # honcho runs Procfile.dev: FastAPI on :8000 and Vite on :5173
+make dev            # FastAPI on :8000 and Vite on :5173
 ```
 
-`make dev` wraps `uv run honcho -f Procfile.dev start`. Run one side alone with
-`make backend` or `make frontend`.
+Open http://localhost:5173 and drop in `examples/sales.csv`. The sample has a
+few planted problems (missing units, a lowercase region, two implausible
+revenues, duplicated rows) so there is something to find.
 
-In dev, Vite proxies `/api` requests to `http://localhost:8000`, so `VITE_API_URL`
-can be left empty locally — the frontend just calls `/api/...` and Vite forwards it
-to the backend.
+`make backend` and `make frontend` run one side at a time. `make lint` runs
+ruff and eslint. Backend tests:
 
-## Project layout
-
+```bash
+cd backend && uv run pytest
 ```
-app/
-├── __init__.py
-├── config.py                  # pydantic-settings Settings
-├── main.py                    # create_app() factory, CORS, router registration
-├── schemas.py                 # pydantic request/response models
-└── routers/
-    ├── __init__.py             # ROUTERS list included by main.py
-    └── greetings.py            # example GET /greetings endpoint
 
-ui/
-├── index.html
-├── public/
-│   └── favicon.svg
-├── stylesheets/                # custom Tailwind classes
-└── src/
-    ├── main.jsx                # entry: QueryClientProvider, Toaster, axios interceptors
-    ├── index.css               # Tailwind + shadcn theme tokens
-    ├── apis/                   # axios calls per resource (e.g. greetings.js)
-    ├── components/
-    │   ├── App.jsx             # router
-    │   ├── routeConstants.jsx  # route paths + ROUTES array
-    │   ├── Home/               # example page calling GET /api/greetings
-    │   ├── commons/            # NotFound
-    │   └── shadcn/             # generated UI primitives (button, empty, sonner)
-    ├── constants/              # query keys
-    ├── hooks/reactQuery/       # TanStack Query hooks per resource
-    ├── lib/                    # cn() helper
-    └── utils/                  # queryClient, ramda helpers
-```
+The tests never call a model. Tools are tested against a synthetic dataset,
+the graph is tested with stubbed agents, and the API with FastAPI's test
+client.
 
 ## API
 
-| Method | Path                    | Description                    |
-|--------|-------------------------|---------------------------------|
-| GET    | `/health`               | Health check                    |
-| GET    | `/api/greetings?name=`  | Example endpoint, returns a greeting |
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/health` | |
+| GET | `/api/analyses/limits` | Upload limit, row cap, model names |
+| POST | `/api/analyses/preview` | multipart `file`; returns the dataset brief |
+| POST | `/api/analyses` | multipart `file` and optional `goal`; streams server-sent events |
 
-## Linting
+Events on the stream: `brief`, then `agent_started`, `agent_finished` or
+`agent_failed` per agent, then `done` with every report. An `error` event
+means the run itself died.
 
-```bash
-make lint         # uv run ruff check . && pnpm lint
+## Deploying to Vercel
+
+Import the repository as one project. `vercel.json` defines two services:
+the Vite build served at `/` and the FastAPI app behind `/api`. Set
+`OPENAI_API_KEY` in the project's environment variables; `WORKER_MODEL` and
+`INTERPRETER_MODEL` are optional overrides.
+
+Two platform limits shape the design. Request bodies are capped at 4.5 MB, so
+that is the upload limit. Functions run for at most 300 seconds on the Hobby
+plan (800 on Pro), so an analysis is a single streamed request and each agent
+has a hard cap on tool calls and a timeout. A typical run on a few thousand
+rows finishes in one to two minutes.
+
+## Layout
+
+```
+backend/
+  app/main.py            FastAPI app factory
+  app/routers/           analyses endpoints
+  app/analysis/
+    loaders.py           CSV and Excel reading
+    profiling.py         column typing and the dataset brief
+    schemas.py           report models
+    tools/               pandas functions each agent can call
+    agents/              one module per agent, plus the shared runner
+    prompts/             system prompts, one file per agent
+    graph.py             LangGraph wiring
+    pipeline.py          prepare an upload and stream a run
+  tests/
+frontend/
+  ui/src/apis/           axios calls and the SSE client
+  ui/src/components/     Upload and Analysis pages, chart components
+examples/sales.csv
+vercel.json
 ```
 
-## Adding a resource
+## Adding an agent
 
-1. Add a schema in `app/schemas.py`.
-2. Add a router in `app/routers/` and register it in `ROUTERS` (`app/routers/__init__.py`).
-3. Add `ui/src/apis/<resource>.js` for the API call.
-4. Add a hook in `ui/src/hooks/reactQuery`.
-5. Add a component and route in `ui/src/components/routeConstants.jsx`.
+Add a tools module under `app/analysis/tools/`, a prompt under
+`app/analysis/prompts/`, an agent module with a `run()` under
+`app/analysis/agents/`, a report model in `schemas.py`, then register a node
+and its edges in `graph.py` and a key in `state.py`. The frontend section
+list in `frontend/ui/src/components/Analysis/` renders whatever reports arrive.
 
-## Deploying
+## Limitations
 
-The two halves deploy separately.
-
-- **Frontend on Vercel**: import the repo; `vercel.json` sets the build command,
-  output directory (`dist/`) and the SPA rewrite. Set `VITE_API_URL` to the
-  backend's public URL in the Vercel project's environment variables.
-- **Backend anywhere that runs a container** (Render, Fly.io, Railway, ECS): use the
-  included `Dockerfile`. Set `FRONTEND_URL` to the Vercel domain so CORS allows it.
-
-Vercel does not run the FastAPI server as configured. Hosting it there would mean
-converting it to a Vercel Python serverless function, which is out of scope for this
-template.
-
-## Using as a template
-
-1. Clone this repository.
-2. Rename `name` in `pyproject.toml` and in `package.json`.
-3. Update `APP_NAME` in your `.env`.
+Files over 4.5 MB are rejected. Datasets above 200,000 rows are sampled
+before analysis. The agents only see summaries, so questions that need
+row-level reasoning across the whole table will not be answered well. Nothing
+is saved: refresh the page and the run is gone, apart from a copy of the last
+completed run kept in the browser's session storage.
