@@ -1,0 +1,30 @@
+@layer components {
+  .bg-standard {
+    @apply bg-gradient-to-br from-slate-900 to-slate-800;
+  }
+
+  .text-error {
+    @apply text-sm text-red-600;
+  }
+
+  .text-success {
+    @apply text-sm text-green-600;
+  }
+}
+
+@layer utilities {
+  .button-primary {
+    @apply bg-blue-600 py-2 text-white hover:bg-blue-700;
+  }
+
+  .button-secondary {
+    @apply bg-gray-600 py-2 text-white hover:bg-gray-700;
+  }
+  .button-danger {
+    @apply bg-red-600 py-2 text-white hover:bg-red-700;
+  }
+}
+
+.required::after {
+  content: "*";
+}
