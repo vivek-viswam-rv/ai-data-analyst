@@ -1,5 +1,7 @@
 # AI Data Analyst
 
+A multi-agent data analyst.
+
 Live at https://ai-data-analyst-vivek.vercel.app
 
 Upload a CSV or Excel file and a small team of agents works through it the way
