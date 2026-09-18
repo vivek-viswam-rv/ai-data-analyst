@@ -13,10 +13,12 @@ import {
   GOAL_MAX_LENGTH,
 } from "constants/analysis";
 import { useFetchLimits, usePreview } from "hooks/reactQuery/useAnalysesApi";
+import { Alert, AlertDescription, AlertTitle } from "shadcn/alert";
 import { Button } from "shadcn/button";
 import { Skeleton } from "shadcn/skeleton";
 import { Textarea } from "shadcn/textarea";
 
+import ActionBar from "./ActionBar";
 import BriefPreview from "./BriefPreview";
 import DropZone from "./DropZone";
 
@@ -81,6 +83,18 @@ const Upload = () => {
     }
   };
 
+  const onReset = () => {
+    previewMutation.reset();
+    setFile(null);
+    if (goal === EXAMPLE_DATASET.goal) {
+      setGoal("");
+    }
+  };
+
+  const onAnalyze = () => {
+    navigate(ANALYSIS_ROUTE, { state: { file, goal: goal.trim() || null } });
+  };
+
   return (
     <div className="min-h-svh bg-background px-4 py-8 text-foreground">
       <div className="mx-auto max-w-4xl space-y-8">
@@ -97,57 +111,80 @@ const Upload = () => {
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <Button
-              type="button"
-              variant="secondary"
-              size="lg"
-              className="h-14 w-full text-base"
-              disabled={isLoadingExample || previewMutation.isPending}
-              onClick={onTryExample}
-            >
-              {isLoadingExample ? (
-                <Loader2 className="size-5 animate-spin" />
-              ) : (
-                <FlaskConical className="size-5" />
-              )}
-              Try the example dataset
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              606 rows of synthetic sales data with a few planted problems to
-              find.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-xs text-muted-foreground">or</span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
-
-          <DropZone
-            maxBytes={effectiveMaxBytes}
-            filename={file?.name}
-            onFileSelected={onFileSelected}
-          />
-
-          {previewMutation.isPending && (
-            <div className="space-y-3">
-              <Skeleton className="h-4 w-48" />
-              <Skeleton className="h-4 w-32" />
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-              </div>
+        {file === null && (
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <Button
+                type="button"
+                variant="secondary"
+                size="lg"
+                className="h-14 w-full text-base"
+                disabled={isLoadingExample || previewMutation.isPending}
+                onClick={onTryExample}
+              >
+                {isLoadingExample ? (
+                  <Loader2 className="size-5 animate-spin" />
+                ) : (
+                  <FlaskConical className="size-5" />
+                )}
+                Try the example dataset
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                606 rows of synthetic sales data with a few planted problems
+                to find.
+              </p>
             </div>
-          )}
 
-          {previewMutation.isSuccess && (
-            <BriefPreview brief={previewMutation.data.brief} />
-          )}
-        </div>
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs text-muted-foreground">or</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+
+            <DropZone
+              maxBytes={effectiveMaxBytes}
+              filename={file?.name}
+              onFileSelected={onFileSelected}
+            />
+          </div>
+        )}
+
+        {file !== null && (
+          <div className="space-y-4">
+            <ActionBar
+              file={file}
+              canAnalyze={previewMutation.isSuccess}
+              onAnalyze={onAnalyze}
+              onReset={onReset}
+            />
+
+            {previewMutation.isPending && (
+              <div className="space-y-3">
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-4 w-32" />
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-full" />
+                  <Skeleton className="h-8 w-full" />
+                  <Skeleton className="h-8 w-full" />
+                </div>
+              </div>
+            )}
+
+            {previewMutation.isSuccess && (
+              <BriefPreview brief={previewMutation.data.brief} />
+            )}
+
+            {previewMutation.isError && (
+              <Alert variant="destructive">
+                <AlertTitle>Could not read this file</AlertTitle>
+                <AlertDescription>
+                  {previewMutation.error?.response?.data?.detail ||
+                    previewMutation.error?.message}
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+        )}
 
         <div className="space-y-2">
           <label htmlFor="goal" className="text-sm font-medium">
@@ -165,18 +202,14 @@ const Upload = () => {
           </p>
         </div>
 
-        <div className="flex justify-end">
-          <Button
-            disabled={!previewMutation.isSuccess || !file}
-            onClick={() =>
-              navigate(ANALYSIS_ROUTE, {
-                state: { file, goal: goal.trim() || null },
-              })
-            }
-          >
-            Analyze
-          </Button>
-        </div>
+        {file !== null && (
+          <ActionBar
+            file={file}
+            canAnalyze={previewMutation.isSuccess}
+            onAnalyze={onAnalyze}
+            onReset={onReset}
+          />
+        )}
       </div>
     </div>
   );
